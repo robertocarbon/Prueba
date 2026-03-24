@@ -1,0 +1,6 @@
+.env
+*.pyc
+__pycache__/
+polymarket_bot.log
+.venv/
+venv/
