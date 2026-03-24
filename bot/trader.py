@@ -1,11 +1,13 @@
 import logging
 import time
+from datetime import datetime
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 
 from bot.analyzer import MarketAnalyzer
 from bot.config import Config
+from bot.dashboard import Dashboard
 from bot.grid import compute_grid_levels, quantity_per_grid
 
 logger = logging.getLogger("grid_bot")
@@ -17,6 +19,8 @@ class GridTrader:
         self.client = Client(
             config.api_key, config.api_secret, testnet=config.testnet
         )
+        self.dashboard = Dashboard(config.symbol, config.testnet)
+        self._analysis_result: dict | None = None
 
         if config.auto_analyze:
             self._apply_market_analysis()
@@ -26,19 +30,29 @@ class GridTrader:
         )
         self.active_orders: dict[str, dict] = {}
 
+        # Configurar dashboard con datos del grid
+        self.dashboard.grid_prices = self.grid_prices
+        self.dashboard.lower_price = config.lower_price
+        self.dashboard.upper_price = config.upper_price
+        self.dashboard.investment = config.investment_amount
+        if self._analysis_result:
+            self.dashboard.atr = self._analysis_result.get("atr", 0.0)
+            self.dashboard.supports = self._analysis_result.get("supports", [])
+            self.dashboard.resistances = self._analysis_result.get("resistances", [])
+
     def _apply_market_analysis(self) -> None:
         """Analiza el mercado y ajusta los parámetros del grid automáticamente."""
         analyzer = MarketAnalyzer(self.client, self.config.symbol)
-        result = analyzer.analyze()
+        self._analysis_result = analyzer.analyze()
 
-        self.config.lower_price = result["lower_price"]
-        self.config.upper_price = result["upper_price"]
-        self.config.grid_levels = result["grid_levels"]
+        self.config.lower_price = self._analysis_result["lower_price"]
+        self.config.upper_price = self._analysis_result["upper_price"]
+        self.config.grid_levels = self._analysis_result["grid_levels"]
 
         logger.info(
             f"Grid ajustado por análisis: "
-            f"{result['lower_price']:.2f} - {result['upper_price']:.2f}, "
-            f"{result['grid_levels']} niveles"
+            f"{self._analysis_result['lower_price']:.2f} - {self._analysis_result['upper_price']:.2f}, "
+            f"{self._analysis_result['grid_levels']} niveles"
         )
 
     def get_current_price(self) -> float:
@@ -95,7 +109,6 @@ class GridTrader:
                 self.place_buy_order(price, qty, i)
             elif price > current_price:
                 self.place_sell_order(price, qty, i)
-            # Si el precio coincide exactamente con un nivel, lo omitimos
 
     def check_and_replace_orders(self) -> None:
         open_orders = self.client.get_open_orders(symbol=self.config.symbol)
@@ -115,6 +128,8 @@ class GridTrader:
             self.config.investment_amount, self.config.grid_levels, avg_price
         )
 
+        grid_step = self.grid_prices[1] - self.grid_prices[0] if len(self.grid_prices) > 1 else 0
+
         for order_id, info in filled_orders.items():
             del self.active_orders[order_id]
             side = info["side"]
@@ -122,6 +137,20 @@ class GridTrader:
             price = info["price"]
 
             logger.info(f"Orden {side} ejecutada en {price:.2f} (grid index {idx})")
+
+            # Calcular ganancia estimada por ciclo grid
+            profit = grid_step * qty if side == "SELL" else 0.0
+
+            self.dashboard.update(
+                self.current_price,
+                self.active_orders,
+                filled_trade={
+                    "side": side,
+                    "price": price,
+                    "time": datetime.now().strftime("%H:%M:%S"),
+                    "profit": profit,
+                },
+            )
 
             if side == "BUY" and idx + 1 < len(self.grid_prices):
                 sell_price = self.grid_prices[idx + 1]
@@ -153,13 +182,21 @@ class GridTrader:
         )
 
         self.setup_initial_grid()
+        self.current_price = self.get_current_price()
+
+        # Iniciar dashboard
+        self.dashboard.update(self.current_price, self.active_orders)
+        self.dashboard.start()
+
         consecutive_errors = 0
 
         try:
             while True:
                 time.sleep(poll_interval)
                 try:
+                    self.current_price = self.get_current_price()
                     self.check_and_replace_orders()
+                    self.dashboard.update(self.current_price, self.active_orders)
                     consecutive_errors = 0
                 except (BinanceAPIException, ConnectionError, TimeoutError) as e:
                     consecutive_errors += 1
@@ -174,5 +211,6 @@ class GridTrader:
         except KeyboardInterrupt:
             logger.info("Bot detenido por el usuario (Ctrl+C)")
         finally:
+            self.dashboard.stop()
             self.cancel_all_orders()
             logger.info("Bot finalizado")
