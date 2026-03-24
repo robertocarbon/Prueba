@@ -4,6 +4,7 @@ import time
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 
+from bot.analyzer import MarketAnalyzer
 from bot.config import Config
 from bot.grid import compute_grid_levels, quantity_per_grid
 
@@ -16,10 +17,29 @@ class GridTrader:
         self.client = Client(
             config.api_key, config.api_secret, testnet=config.testnet
         )
+
+        if config.auto_analyze:
+            self._apply_market_analysis()
+
         self.grid_prices = compute_grid_levels(
             config.lower_price, config.upper_price, config.grid_levels
         )
         self.active_orders: dict[str, dict] = {}
+
+    def _apply_market_analysis(self) -> None:
+        """Analiza el mercado y ajusta los parámetros del grid automáticamente."""
+        analyzer = MarketAnalyzer(self.client, self.config.symbol)
+        result = analyzer.analyze()
+
+        self.config.lower_price = result["lower_price"]
+        self.config.upper_price = result["upper_price"]
+        self.config.grid_levels = result["grid_levels"]
+
+        logger.info(
+            f"Grid ajustado por análisis: "
+            f"{result['lower_price']:.2f} - {result['upper_price']:.2f}, "
+            f"{result['grid_levels']} niveles"
+        )
 
     def get_current_price(self) -> float:
         ticker = self.client.get_symbol_ticker(symbol=self.config.symbol)
