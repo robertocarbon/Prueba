@@ -56,7 +56,7 @@ def run_demo():
 
     logger.info("Iniciando modo DEMO...")
 
-    dashboard = WebDashboard("BTCUSDT", testnet=True, port=5000)
+    dashboard = WebDashboard("BTCUSDT", testnet=True, port=8080)
 
     grid_prices = compute_grid_levels(lower, upper, levels)
     avg_price = (upper + lower) / 2

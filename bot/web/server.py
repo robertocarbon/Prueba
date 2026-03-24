@@ -9,7 +9,7 @@ logger = logging.getLogger("grid_bot")
 
 
 class WebDashboard:
-    def __init__(self, symbol: str, testnet: bool, port: int = 5000):
+    def __init__(self, symbol: str, testnet: bool, port: int = 8080):
         self.symbol = symbol
         self.testnet = testnet
         self.port = port
