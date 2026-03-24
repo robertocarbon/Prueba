@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Trading Bot</title>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0e17;
+            color: #e1e5ea;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d1321 0%, #1a1f36 100%);
+            border-bottom: 1px solid #1e2740;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa, #00a8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-testnet { background: #332b00; color: #ffd60a; }
+        .badge-live { background: #331a1a; color: #ff4d4d; }
+
+        .price-display {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .price-change {
+            font-size: 13px;
+            margin-left: 8px;
+        }
+
+        .price-up { color: #00d4aa; }
+        .price-down { color: #ff4d6a; }
+
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: 1fr auto;
+            gap: 0;
+            height: calc(100vh - 56px);
+        }
+
+        .chart-area {
+            position: relative;
+            background: #0d1117;
+            border-right: 1px solid #1e2740;
+        }
+
+        #chart-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            background: #0d1321;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel {
+            border-bottom: 1px solid #1e2740;
+            padding: 16px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #6b7394;
+            margin-bottom: 12px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: #111827;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #1e2740;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #6b7394;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 2px;
+        }
+
+        .stat-value.profit { color: #00d4aa; }
+        .stat-value.loss { color: #ff4d6a; }
+
+        /* Grid Levels */
+        .grid-levels {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .grid-level {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            transition: background 0.2s;
+        }
+
+        .grid-level:hover {
+            background: #1a2035;
+        }
+
+        .grid-level-buy {
+            border-left: 3px solid #00d4aa;
+        }
+
+        .grid-level-sell {
+            border-left: 3px solid #ff4d6a;
+        }
+
+        .grid-level-empty {
+            border-left: 3px solid #2a2f45;
+            color: #4a5068;
+        }
+
+        .grid-level-current {
+            background: #1a2035;
+            border: 1px solid #ffd60a;
+            border-left: 3px solid #ffd60a;
+        }
+
+        .grid-level .side {
+            font-weight: 600;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .side-buy { background: #0a3d2e; color: #00d4aa; }
+        .side-sell { background: #3d0a1a; color: #ff4d6a; }
+        .side-none { background: #1e2240; color: #4a5068; }
+
+        /* Trades */
+        .trades-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .trade-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #111827;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .trade-time { color: #6b7394; }
+
+        /* Analysis */
+        .analysis-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .analysis-label { color: #6b7394; }
+        .analysis-value { color: #fff; font-weight: 500; }
+
+        .support-dot { color: #00d4aa; }
+        .resistance-dot { color: #ff4d6a; }
+
+        /* Bottom bar */
+        .bottom-bar {
+            grid-column: 1 / -1;
+            background: #0d1321;
+            border-top: 1px solid #1e2740;
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6b7394;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active { background: #00d4aa; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2a2f45; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">Grid Bot</div>
+            <span id="badge" class="badge badge-testnet">TESTNET</span>
+            <span id="symbol" style="font-weight:600; color:#8892b0;">BTC/USDT</span>
+        </div>
+        <div>
+            <span class="price-display" id="current-price">$0.00</span>
+            <span class="price-change" id="price-change"></span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="chart-area">
+            <div id="chart-container"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">Resumen</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Ganancia</div>
+                        <div class="stat-value profit" id="total-profit">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Trades</div>
+                        <div class="stat-value" id="total-trades">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Inversión</div>
+                        <div class="stat-value" id="investment">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Órdenes</div>
+                        <div class="stat-value" id="active-orders-count">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Análisis de Mercado</div>
+                <div id="analysis-container">
+                    <div class="analysis-item">
+                        <span class="analysis-label">ATR (14)</span>
+                        <span class="analysis-value" id="atr-value">-</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="analysis-label">Rango Grid</span>
+                        <span class="analysis-value" id="range-value">-</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="analysis-label">Niveles</span>
+                        <span class="analysis-value" id="levels-value">-</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="analysis-label"><span class="support-dot">●</span> Soportes</span>
+                        <span class="analysis-value" id="supports-value">-</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="analysis-label"><span class="resistance-dot">●</span> Resistencias</span>
+                        <span class="analysis-value" id="resistances-value">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Niveles del Grid</div>
+                <div class="grid-levels" id="grid-levels-container"></div>
+            </div>
+
+            <div class="panel" style="flex:1;">
+                <div class="panel-title">Últimos Trades</div>
+                <div class="trades-list" id="trades-container"></div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div>
+                <span class="status-dot status-active"></span>
+                Bot activo — Actualizando cada 5s
+            </div>
+            <div id="last-update">-</div>
+        </div>
+    </div>
+
+    <script>
+        // Chart setup
+        const chartContainer = document.getElementById('chart-container');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            layout: {
+                background: { color: '#0d1117' },
+                textColor: '#6b7394',
+                fontSize: 12,
+            },
+            grid: {
+                vertLines: { color: '#1e274020' },
+                horzLines: { color: '#1e274020' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#6b739440', style: 0, width: 1 },
+                horzLine: { color: '#6b739440', style: 0, width: 1 },
+            },
+            rightPriceScale: {
+                borderColor: '#1e2740',
+            },
+            timeScale: {
+                borderColor: '#1e2740',
+                timeVisible: true,
+            },
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#00d4aa',
+            downColor: '#ff4d6a',
+            borderUpColor: '#00d4aa',
+            borderDownColor: '#ff4d6a',
+            wickUpColor: '#00d4aa',
+            wickDownColor: '#ff4d6a',
+        });
+
+        // Price line for current price
+        const priceLine = chart.addLineSeries({
+            color: '#ffd60a',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+        });
+
+        // Grid line series for buy/sell levels
+        let gridBuyLines = [];
+        let gridSellLines = [];
+
+        function addGridLines(gridPrices, currentPrice) {
+            // Remove old lines
+            gridBuyLines.forEach(l => chart.removeSeries(l));
+            gridSellLines.forEach(l => chart.removeSeries(l));
+            gridBuyLines = [];
+            gridSellLines = [];
+
+            gridPrices.forEach(price => {
+                const isBuy = price < currentPrice;
+                const line = chart.addLineSeries({
+                    color: isBuy ? '#00d4aa30' : '#ff4d6a30',
+                    lineWidth: 1,
+                    lineStyle: 2,
+                    priceLineVisible: false,
+                    lastValueVisible: false,
+                    crosshairMarkerVisible: false,
+                });
+
+                // We need at least 2 data points for a line
+                if (window.lastKlines && window.lastKlines.length >= 2) {
+                    const firstTime = window.lastKlines[0].time;
+                    const lastTime = window.lastKlines[window.lastKlines.length - 1].time;
+                    line.setData([
+                        { time: firstTime, value: price },
+                        { time: lastTime, value: price },
+                    ]);
+                }
+
+                if (isBuy) gridBuyLines.push(line);
+                else gridSellLines.push(line);
+            });
+        }
+
+        // Format helpers
+        function fmtPrice(p) {
+            return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fmtPriceShort(p) {
+            if (p >= 1000) return '$' + (p / 1000).toFixed(1) + 'K';
+            return fmtPrice(p);
+        }
+
+        let previousPrice = 0;
+
+        function updateDashboard(data) {
+            // Header
+            const symbolText = data.symbol.replace('USDT', '/USDT');
+            document.getElementById('symbol').textContent = symbolText;
+            document.getElementById('current-price').textContent = fmtPrice(data.current_price);
+
+            const badge = document.getElementById('badge');
+            badge.textContent = data.testnet ? 'TESTNET' : 'LIVE';
+            badge.className = 'badge ' + (data.testnet ? 'badge-testnet' : 'badge-live');
+
+            // Price change indicator
+            const changeEl = document.getElementById('price-change');
+            if (previousPrice > 0 && data.current_price !== previousPrice) {
+                const diff = data.current_price - previousPrice;
+                const pct = ((diff / previousPrice) * 100).toFixed(2);
+                const sign = diff > 0 ? '+' : '';
+                changeEl.textContent = `${sign}${pct}%`;
+                changeEl.className = 'price-change ' + (diff >= 0 ? 'price-up' : 'price-down');
+            }
+            previousPrice = data.current_price;
+
+            // Stats
+            const profitEl = document.getElementById('total-profit');
+            profitEl.textContent = fmtPrice(data.total_profit);
+            profitEl.className = 'stat-value ' + (data.total_profit >= 0 ? 'profit' : 'loss');
+            document.getElementById('total-trades').textContent = data.filled_trades.length;
+            document.getElementById('investment').textContent = fmtPrice(data.investment);
+            document.getElementById('active-orders-count').textContent = data.active_orders.length;
+
+            // Analysis
+            document.getElementById('atr-value').textContent = fmtPrice(data.atr);
+            document.getElementById('range-value').textContent = fmtPriceShort(data.lower_price) + ' - ' + fmtPriceShort(data.upper_price);
+            document.getElementById('levels-value').textContent = data.grid_levels;
+            document.getElementById('supports-value').textContent = data.supports.slice(0, 2).map(fmtPriceShort).join(', ') || '-';
+            document.getElementById('resistances-value').textContent = data.resistances.slice(0, 2).map(fmtPriceShort).join(', ') || '-';
+
+            // Candlestick chart
+            if (data.klines && data.klines.length > 0) {
+                const candles = data.klines.map(k => ({
+                    time: k.time,
+                    open: k.open,
+                    high: k.high,
+                    low: k.low,
+                    close: k.close,
+                }));
+                window.lastKlines = candles;
+                candleSeries.setData(candles);
+                addGridLines(data.grid_prices, data.current_price);
+            }
+
+            // Grid levels
+            const ordersByPrice = {};
+            data.active_orders.forEach(o => { ordersByPrice[o.price.toFixed(2)] = o; });
+
+            const gridContainer = document.getElementById('grid-levels-container');
+            let gridHTML = '';
+            const sortedPrices = [...data.grid_prices].sort((a, b) => b - a);
+
+            // Find closest grid level to current price
+            let closestIdx = 0;
+            let closestDiff = Infinity;
+            sortedPrices.forEach((p, i) => {
+                const d = Math.abs(p - data.current_price);
+                if (d < closestDiff) { closestDiff = d; closestIdx = i; }
+            });
+
+            sortedPrices.forEach((price, i) => {
+                const key = price.toFixed(2);
+                const order = ordersByPrice[key];
+                const isCurrent = i === closestIdx;
+
+                let levelClass = 'grid-level-empty';
+                let sideHTML = '<span class="side side-none">---</span>';
+
+                if (order) {
+                    if (order.side === 'BUY') {
+                        levelClass = 'grid-level-buy';
+                        sideHTML = '<span class="side side-buy">BUY</span>';
+                    } else {
+                        levelClass = 'grid-level-sell';
+                        sideHTML = '<span class="side side-sell">SELL</span>';
+                    }
+                }
+
+                if (isCurrent) levelClass += ' grid-level-current';
+
+                gridHTML += `
+                    <div class="grid-level ${levelClass}">
+                        <span>${fmtPrice(price)}</span>
+                        ${sideHTML}
+                    </div>`;
+            });
+            gridContainer.innerHTML = gridHTML;
+
+            // Trades
+            const tradesContainer = document.getElementById('trades-container');
+            let tradesHTML = '';
+            const recentTrades = data.filled_trades.slice(-10).reverse();
+            recentTrades.forEach(t => {
+                const sideClass = t.side === 'BUY' ? 'side-buy' : 'side-sell';
+                tradesHTML += `
+                    <div class="trade-item">
+                        <span class="trade-time">${t.time || ''}</span>
+                        <span class="side ${sideClass}">${t.side}</span>
+                        <span>${fmtPrice(t.price)}</span>
+                    </div>`;
+            });
+            tradesContainer.innerHTML = tradesHTML || '<div style="color:#4a5068;text-align:center;padding:20px;">Sin trades aún</div>';
+
+            // Footer
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Poll for data
+        async function fetchState() {
+            try {
+                const res = await fetch('/api/state');
+                const data = await res.json();
+                updateDashboard(data);
+            } catch (e) {
+                console.error('Error fetching state:', e);
+            }
+        }
+
+        // Resize chart
+        const resizeObserver = new ResizeObserver(() => {
+            chart.applyOptions({
+                width: chartContainer.clientWidth,
+                height: chartContainer.clientHeight,
+            });
+        });
+        resizeObserver.observe(chartContainer);
+
+        // Start polling
+        fetchState();
+        setInterval(fetchState, 5000);
+    </script>
+</body>
+</html>

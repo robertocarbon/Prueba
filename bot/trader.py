@@ -7,8 +7,8 @@ from binance.exceptions import BinanceAPIException, BinanceOrderException
 
 from bot.analyzer import MarketAnalyzer
 from bot.config import Config
-from bot.dashboard import Dashboard
 from bot.grid import compute_grid_levels, quantity_per_grid
+from bot.web.server import WebDashboard
 
 logger = logging.getLogger("grid_bot")
 
@@ -19,7 +19,7 @@ class GridTrader:
         self.client = Client(
             config.api_key, config.api_secret, testnet=config.testnet
         )
-        self.dashboard = Dashboard(config.symbol, config.testnet)
+        self.dashboard = WebDashboard(config.symbol, config.testnet)
         self._analysis_result: dict | None = None
 
         if config.auto_analyze:
@@ -35,6 +35,7 @@ class GridTrader:
         self.dashboard.lower_price = config.lower_price
         self.dashboard.upper_price = config.upper_price
         self.dashboard.investment = config.investment_amount
+        self.dashboard.grid_levels = config.grid_levels
         if self._analysis_result:
             self.dashboard.atr = self._analysis_result.get("atr", 0.0)
             self.dashboard.supports = self._analysis_result.get("supports", [])
@@ -54,6 +55,27 @@ class GridTrader:
             f"{self._analysis_result['lower_price']:.2f} - {self._analysis_result['upper_price']:.2f}, "
             f"{self._analysis_result['grid_levels']} niveles"
         )
+
+    def _load_klines(self) -> None:
+        """Carga velas históricas para el chart del dashboard."""
+        try:
+            klines = self.client.get_klines(
+                symbol=self.config.symbol,
+                interval=Client.KLINE_INTERVAL_1HOUR,
+                limit=168,
+            )
+            self.dashboard.klines = [
+                {
+                    "time": int(k[0] / 1000),
+                    "open": float(k[1]),
+                    "high": float(k[2]),
+                    "low": float(k[3]),
+                    "close": float(k[4]),
+                }
+                for k in klines
+            ]
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar velas: {e}")
 
     def get_current_price(self) -> float:
         ticker = self.client.get_symbol_ticker(symbol=self.config.symbol)
@@ -138,7 +160,6 @@ class GridTrader:
 
             logger.info(f"Orden {side} ejecutada en {price:.2f} (grid index {idx})")
 
-            # Calcular ganancia estimada por ciclo grid
             profit = grid_step * qty if side == "SELL" else 0.0
 
             self.dashboard.update(
@@ -181,14 +202,15 @@ class GridTrader:
             f"Testnet: {self.config.testnet}"
         )
 
+        # Cargar velas históricas y arrancar dashboard web
+        self._load_klines()
         self.setup_initial_grid()
         self.current_price = self.get_current_price()
-
-        # Iniciar dashboard
         self.dashboard.update(self.current_price, self.active_orders)
         self.dashboard.start()
 
         consecutive_errors = 0
+        kline_refresh_counter = 0
 
         try:
             while True:
@@ -197,6 +219,13 @@ class GridTrader:
                     self.current_price = self.get_current_price()
                     self.check_and_replace_orders()
                     self.dashboard.update(self.current_price, self.active_orders)
+
+                    # Refrescar velas cada 10 ciclos (~5 min)
+                    kline_refresh_counter += 1
+                    if kline_refresh_counter >= 10:
+                        self._load_klines()
+                        kline_refresh_counter = 0
+
                     consecutive_errors = 0
                 except (BinanceAPIException, ConnectionError, TimeoutError) as e:
                     consecutive_errors += 1
