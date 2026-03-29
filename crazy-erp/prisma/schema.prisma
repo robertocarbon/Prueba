@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ===================== MULTI-TENANT =====================
+
+model Company {
+  id            String   @id @default(uuid())
+  name          String
+  cif           String   @unique
+  address       String?
+  city          String?
+  postalCode    String?
+  province      String?
+  country       String   @default("España")
+  phone         String?
+  email         String?
+  web           String?
+  logo          String?
+  fiscalName    String?
+  fiscalAddress String?
+  currency      String   @default("EUR")
+  prefixProject String   @default("CRAZY")
+  prefixBudget  String   @default("PPTO")
+  prefixInvoice String   @default("FE")
+  prefixReceivedInvoice String @default("FR")
+  prefixOrder   String   @default("OC")
+  nextProjectNum Int     @default(1)
+  nextBudgetNum  Int     @default(1)
+  nextInvoiceNum Int     @default(1)
+  nextReceivedInvoiceNum Int @default(1)
+  nextOrderNum   Int     @default(1)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  userCompanies UserCompany[]
+  settings      CompanySetting[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+// ===================== USERS & AUTH =====================
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  photo           String?
+  theme           String   @default("light")
+  language        String   @default("es")
+  mustChangePassword Boolean @default(true)
+  failedAttempts  Int      @default(0)
+  lockedUntil     DateTime?
+  lastLoginAt     DateTime?
+  telegramChatId  String?
+  active          Boolean  @default(true)
+  isSuperAdmin    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  companies       UserCompany[]
+  sessions        Session[]
+  loginLogs       LoginLog[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  tablePreferences TablePreference[]
+  dashboardWidgets DashboardWidget[]
+}
+
+model UserCompany {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  role      String   @default("user")
+  active    Boolean  @default(true)
+  lastAccessAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  permissions Permission[]
+
+  @@unique([userId, companyId])
+}
+
+model Permission {
+  id            String @id @default(uuid())
+  userCompanyId String
+  module        String
+  canView       Boolean @default(false)
+  canCreate     Boolean @default(false)
+  canEdit       Boolean @default(false)
+  canDelete     Boolean @default(false)
+  canExport     Boolean @default(false)
+
+  userCompany UserCompany @relation(fields: [userCompanyId], references: [id], onDelete: Cascade)
+
+  @@unique([userCompanyId, module])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  device       String?
+  expiresAt    DateTime
+  refreshExpiresAt DateTime
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String
+  ipAddress String?
+  userAgent String?
+  device    String?
+  success   Boolean
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// ===================== CONFIGURATION =====================
+
+model CompanySetting {
+  id        String @id @default(uuid())
+  companyId String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, key])
+}
+
+// ===================== NOTIFICATIONS =====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String?
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// ===================== AUDIT =====================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  companyId  String?
+  action     String
+  entity     String
+  entityId   String?
+  oldData    String?
+  newData    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+}
+
+// ===================== USER PREFERENCES =====================
+
+model TablePreference {
+  id        String @id @default(uuid())
+  userId    String
+  tableId   String
+  columns   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tableId])
+}
+
+model DashboardWidget {
+  id        String @id @default(uuid())
+  userId    String
+  widgetKey String
+  position  Int    @default(0)
+  visible   Boolean @default(true)
+  config    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, widgetKey])
+}
