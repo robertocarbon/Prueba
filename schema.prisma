@@ -1,0 +1,579 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MULTI-EMPRESA
+// ============================================
+
+model Empresa {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  cif       String?  @unique
+  direccion String?
+  telefono  String?
+  email     String?
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  proyectos            Proyecto[]
+  asignaciones         AsignacionProyecto[]
+  dietas               Dieta[]
+  alojamientos         Alojamiento[]
+  personaEmpresas      PersonaEmpresa[]
+  presupuestos         Presupuesto[]
+  gastosNomina         GastoNomina[]
+  pettyCash            PettyCash[]
+  facturasIVA          FacturaIVA[]
+  movimientosBancarios MovimientoBancario[]
+  cuentasBancarias     CuentaBancaria[]
+}
+
+// ============================================
+// GESTION DE PROYECTOS
+// ============================================
+
+model Proyecto {
+  id                    Int       @id @default(autoincrement())
+  empresaId             Int
+  nombre                String
+  codigo                String    @unique
+  cliente               String?
+  descripcion           String?
+  estado                String    @default("borrador")
+  fechaInicio           DateTime?
+  fechaFinPrevista      DateTime?
+  fechaFinReal          DateTime?
+  fechaInicioDecorado   DateTime?
+  fechaFinDecorado      DateTime?
+  fechaInicioConstruccion DateTime?
+  fechaFinConstruccion    DateTime?
+  fechaInicioMontaje      DateTime?
+  fechaFinMontaje         DateTime?
+  fechaInicioDesmontaje   DateTime?
+  fechaFinDesmontaje      DateTime?
+  ubicacionInstalacion  String?
+  notas                 String?
+  presupuestoTotal      Float?
+  presupuestoGastado    Float?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  empresa         Empresa              @relation(fields: [empresaId], references: [id])
+  fases           Fase[]
+  tareas          Tarea[]
+  asignaciones    AsignacionProyecto[]
+  documentos      Documento[]
+  registrosTiempo RegistroTiempo[]
+  notasProyecto   NotaProyecto[]
+  materiales      MaterialProyecto[]
+  presupuestos    Presupuesto[]
+  dietas          Dieta[]
+  alojamientos    Alojamiento[]
+
+  @@index([empresaId])
+  @@index([estado])
+}
+
+model Fase {
+  id             Int       @id @default(autoincrement())
+  proyectoId     Int
+  presupuestoId  Int?
+  nombre         String
+  tipo           String
+  orden          Int
+  estado         String    @default("pendiente")
+  fechaInicio    DateTime?
+  fechaFin       DateTime?
+  notas          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  proyecto        Proyecto         @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  presupuesto     Presupuesto?     @relation(fields: [presupuestoId], references: [id], onDelete: SetNull)
+  tareas          Tarea[]
+  asignaciones    AsignacionFase[]
+  registrosTiempo RegistroTiempo[]
+
+  @@index([proyectoId])
+  @@index([presupuestoId])
+}
+
+model Tarea {
+  id              Int       @id @default(autoincrement())
+  proyectoId      Int
+  faseId          Int?
+  titulo          String
+  descripcion     String?
+  estado          String    @default("pendiente")
+  prioridad       String    @default("media")
+  fechaLimite     DateTime?
+  fechaCompletada DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  proyecto     Proyecto          @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  fase         Fase?             @relation(fields: [faseId], references: [id], onDelete: SetNull)
+  asignaciones AsignacionTarea[]
+
+  @@index([proyectoId])
+  @@index([faseId])
+  @@index([estado])
+}
+
+// ============================================
+// PERSONAL Y RRHH
+// ============================================
+
+model Persona {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  apellidos       String
+  dni             String?   @unique
+  email           String?
+  telefono        String?
+  rolPrincipal    String
+  habilidades     String?
+  puesto          String?
+  tarifaDiaria    Float?
+  sueldoSemanal   Float?
+  notas           String?
+  direccion       String?
+  nafss           String?   // Nº Seguridad Social
+  irpf            Float?    // IRPF solicitado %
+  numeroCuenta    String?   // Cuenta bancaria (IBAN)
+  fechaNacimiento DateTime?
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  empresas             PersonaEmpresa[]
+  asignacionesProyecto AsignacionProyecto[]
+  asignacionesTarea    AsignacionTarea[]
+  asignacionesFase     AsignacionFase[]
+  dietas               Dieta[]
+  alojamientos         Alojamiento[]
+  gastosNomina         GastoNomina[]
+  registrosTiempo      RegistroTiempo[]
+}
+
+model PersonaEmpresa {
+  id        Int      @id @default(autoincrement())
+  personaId Int
+  empresaId Int
+  cargo     String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  persona Persona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([personaId, empresaId])
+  @@index([personaId])
+  @@index([empresaId])
+}
+
+model AsignacionProyecto {
+  id          Int       @id @default(autoincrement())
+  proyectoId  Int
+  personaId   Int
+  empresaId   Int
+  rol         String?
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+  notas       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  persona  Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  empresa  Empresa  @relation(fields: [empresaId], references: [id])
+
+  @@unique([proyectoId, personaId])
+  @@index([proyectoId])
+  @@index([personaId])
+}
+
+model AsignacionTarea {
+  id        Int      @id @default(autoincrement())
+  tareaId   Int
+  personaId Int
+  createdAt DateTime @default(now())
+
+  tarea   Tarea   @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  persona Persona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([tareaId, personaId])
+}
+
+model Dieta {
+  id         Int       @id @default(autoincrement())
+  personaId  Int
+  empresaId  Int
+  proyectoId Int?
+  fecha      DateTime
+  tipo       String
+  importe    Float
+  ubicacion  String?
+  estado     String    @default("pendiente")
+  notas      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  persona  Persona   @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  empresa  Empresa   @relation(fields: [empresaId], references: [id])
+  proyecto Proyecto? @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+
+  @@index([personaId])
+  @@index([empresaId])
+  @@index([proyectoId])
+  @@index([fecha])
+}
+
+model Alojamiento {
+  id             Int       @id @default(autoincrement())
+  personaId      Int
+  empresaId      Int
+  proyectoId     Int?
+  tipo           String
+  nombre         String
+  direccion      String?
+  fechaEntrada   DateTime
+  fechaSalida    DateTime?
+  costePorNoche  Float?
+  costeTotal     Float?
+  estado         String    @default("reservado")
+  notas          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  persona  Persona   @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  empresa  Empresa   @relation(fields: [empresaId], references: [id])
+  proyecto Proyecto? @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+
+  @@index([personaId])
+  @@index([empresaId])
+  @@index([proyectoId])
+  @@index([fechaEntrada])
+}
+
+// ============================================
+// PRESUPUESTOS / DOCUMENTOS
+// ============================================
+
+model Presupuesto {
+  id          Int      @id @default(autoincrement())
+  empresaId   Int
+  proyectoId  Int?
+  nombre      String
+  archivo     String?
+  importe     Float?
+  importePagado Float?  @default(0)
+  estado      String   @default("borrador")
+  tipo        String   @default("presupuesto")
+  analisisIA  String?
+  notas       String?
+  fechaInicioConstruccion DateTime?
+  fechaFinConstruccion    DateTime?
+  fechaInicioEnvio        DateTime?
+  fechaFinEnvio           DateTime?
+  fechaInicioMontaje      DateTime?
+  fechaFinMontaje         DateTime?
+  fechaInicioDesmontaje   DateTime?
+  fechaFinDesmontaje      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  proyecto    Proyecto?    @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  fases       Fase[]
+  facturasIVA FacturaIVA[]
+
+  @@index([empresaId])
+  @@index([proyectoId])
+}
+
+// ============================================
+// FINANZAS
+// ============================================
+
+model GastoNomina {
+  id          Int      @id @default(autoincrement())
+  empresaId   Int
+  personaId   Int
+  periodo     String
+  concepto    String
+  importe     Float
+  pagado      Boolean  @default(false)
+  notas       String?
+  createdAt   DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  persona Persona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([personaId])
+  @@index([periodo])
+}
+
+model PettyCash {
+  id          Int      @id @default(autoincrement())
+  empresaId   Int
+  fecha       DateTime
+  concepto    String
+  tipo        String
+  importe     Float
+  responsable String?
+  notas       String?
+  createdAt   DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([fecha])
+}
+
+// ============================================
+// IVA
+// ============================================
+
+model FacturaIVA {
+  id             Int      @id @default(autoincrement())
+  empresaId      Int
+  presupuestoId  Int?
+  tipo           String   // "emitida" | "recibida"
+  fecha          DateTime
+  concepto       String
+  baseImponible  Float
+  tipoIVA        Float    // 21, 10, 4, 0
+  cuotaIVA       Float
+  total          Float
+  notas          String?
+  numeroFactura  String?
+  emisor         String?
+  receptor       String?
+  archivoOrigen  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  empresa              Empresa              @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  presupuesto          Presupuesto?         @relation(fields: [presupuestoId], references: [id], onDelete: SetNull)
+  lineas               LineaFactura[]
+  movimientosBancarios MovimientoBancario[]
+
+  @@index([empresaId])
+  @@index([fecha])
+  @@index([presupuestoId])
+}
+
+model LineaFactura {
+  id             Int      @id @default(autoincrement())
+  facturaIVAId   Int
+  descripcion    String
+  cantidad       Float    @default(1)
+  precioUnitario Float
+  baseImponible  Float
+  tipoIVA        Float
+  cuotaIVA       Float
+  total          Float
+  createdAt      DateTime @default(now())
+
+  factura FacturaIVA @relation(fields: [facturaIVAId], references: [id], onDelete: Cascade)
+
+  @@index([facturaIVAId])
+}
+
+// ============================================
+// MODULO BANCARIO
+// ============================================
+
+model MovimientoBancario {
+  id            Int      @id @default(autoincrement())
+  empresaId     Int
+  banco         String   // "santander" | "caixabank"
+  fecha         DateTime
+  concepto      String
+  importe       Float    // positivo=ingreso, negativo=gasto
+  saldo         Float?
+  referencia    String?
+  categoriaAuto String?
+  facturaIVAId  Int?
+  conciliado    Boolean  @default(false)
+  notas         String?
+  createdAt     DateTime @default(now())
+
+  empresa    Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  facturaIVA FacturaIVA? @relation(fields: [facturaIVAId], references: [id], onDelete: SetNull)
+
+  @@index([empresaId])
+  @@index([fecha])
+  @@index([conciliado])
+  @@index([facturaIVAId])
+}
+
+model CuentaBancaria {
+  id                      Int      @id @default(autoincrement())
+  empresaId               Int
+  banco                   String   // "santander" | "caixabank"
+  numeroCuenta            String
+  alias                   String?
+  activa                  Boolean  @default(true)
+  gocardlessRequisitionId String?
+  gocardlessAccountId     String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACION
+// ============================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       String   @default("user")
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// CONFIGURACION
+// ============================================
+
+model Configuracion {
+  id          Int      @id @default(autoincrement())
+  clave       String   @unique
+  valor       String
+  descripcion String?
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================
+// DOCUMENTOS DE PROYECTO
+// ============================================
+
+model Documento {
+  id          Int      @id @default(autoincrement())
+  proyectoId  Int
+  nombre      String
+  archivo     String
+  tipo        String   @default("otro")
+  tamano      Int?
+  notas       String?
+  createdAt   DateTime @default(now())
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  @@index([proyectoId])
+}
+
+// ============================================
+// REGISTRO DE TIEMPO
+// ============================================
+
+model RegistroTiempo {
+  id         Int      @id @default(autoincrement())
+  personaId  Int
+  proyectoId Int
+  faseId     Int?
+  fecha      DateTime
+  dias       Float
+  notas      String?
+  coste      Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  persona  Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  fase     Fase?    @relation(fields: [faseId], references: [id], onDelete: SetNull)
+
+  @@index([personaId])
+  @@index([proyectoId])
+  @@index([faseId])
+  @@index([fecha])
+}
+
+model AsignacionFase {
+  id        Int      @id @default(autoincrement())
+  faseId    Int
+  personaId Int
+  createdAt DateTime @default(now())
+
+  fase    Fase    @relation(fields: [faseId], references: [id], onDelete: Cascade)
+  persona Persona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([faseId, personaId])
+  @@index([faseId])
+  @@index([personaId])
+}
+
+// ============================================
+// NOTAS DE PROYECTO
+// ============================================
+
+model NotaProyecto {
+  id         Int      @id @default(autoincrement())
+  proyectoId Int
+  fecha      DateTime @default(now())
+  autor      String
+  contenido  String
+  tipo       String   @default("general") // incidencia | decision | cambio | general
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+
+  @@index([proyectoId])
+  @@index([fecha])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  accion     String   // "DELETE_PROYECTO", "CREATE_PROYECTO", etc.
+  entidad    String   // "Proyecto"
+  entidadId  Int?
+  detalles   String?  // JSON con datos relevantes (nombre, empresaId, etc.)
+  usuarioId  Int?
+  fecha      DateTime @default(now())
+
+  @@index([entidad])
+  @@index([fecha])
+}
+
+// ============================================
+// MATERIALES DE PROYECTO
+// ============================================
+
+model MaterialProyecto {
+  id         Int      @id @default(autoincrement())
+  proyectoId Int
+  nombre     String
+  cantidad   Float    @default(1)
+  unidad     String   @default("ud")
+  comprado   Boolean  @default(false)
+  proveedor  String?
+  coste      Float?
+  notas      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+
+  @@index([proyectoId])
+}
