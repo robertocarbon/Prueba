@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save the Date - Laura & Roberto</title>
+    <meta property="og:title" content="Save the Date - Laura & Roberto">
+    <meta property="og:description" content="¡Nos casamos! 29 de Septiembre de 2028 - Temática Western">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Cinzel+Decorative:wght@700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --parchment: #F5E6C8;
+            --parchment-dark: #D4A96A;
+            --brown-dark: #3E2723;
+            --gold: #C5961A;
+            --sienna: #A0522D;
+            --saddle: #8B4513;
+            --leather: #2C1810;
+            --gold-warm: #DAA520;
+            --cream: #E8D5A8;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: var(--brown-dark);
+            overflow-x: hidden;
+            background: var(--leather);
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a1028 40%, #2C1810 80%, #3E2723 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Stars */
+        .stars {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Desert silhouette */
+        .desert-silhouette {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: var(--leather);
+            clip-path: polygon(0% 100%, 0% 60%, 5% 55%, 12% 50%, 18% 55%, 25% 40%, 30% 35%, 35% 38%, 40% 45%, 45% 42%, 50% 35%, 55% 30%, 58% 32%, 62% 40%, 68% 45%, 72% 38%, 78% 42%, 82% 50%, 88% 55%, 92% 48%, 96% 52%, 100% 45%, 100% 100%);
+        }
+
+        /* Cactus silhouettes */
+        .cactus-silhouette {
+            position: absolute;
+            bottom: 120px;
+            width: 30px;
+            height: 80px;
+            background: var(--leather);
+            border-radius: 15px 15px 0 0;
+        }
+        .cactus-silhouette::before, .cactus-silhouette::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 40px;
+            background: var(--leather);
+            border-radius: 10px 10px 0 0;
+        }
+        .cactus-silhouette::before {
+            left: -15px;
+            top: 15px;
+            transform: rotate(10deg);
+        }
+        .cactus-silhouette::after {
+            right: -15px;
+            top: 25px;
+            transform: rotate(-10deg);
+        }
+        .cactus-silhouette.left { left: 15%; }
+        .cactus-silhouette.right { right: 12%; bottom: 100px; height: 100px; }
+
+        /* Hero text */
+        .hero-text {
+            text-align: center;
+            z-index: 2;
+            animation: fadeInUp 2s ease-out;
+        }
+
+        .hero-text h1 {
+            font-family: 'Rye', cursive;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(197,150,26,0.3);
+            letter-spacing: 0.1em;
+        }
+
+        .hero-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: var(--cream);
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            margin-top: 15px;
+            opacity: 0.9;
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(40px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: bounce 2s ease-in-out infinite;
+            color: var(--gold);
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+        .scroll-indicator .arrow {
+            width: 20px;
+            height: 20px;
+            border-right: 2px solid var(--gold);
+            border-bottom: 2px solid var(--gold);
+            transform: rotate(45deg);
+            margin-top: 8px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(12px); }
+        }
+
+        /* ===== WANTED POSTER SECTION ===== */
+        .poster-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: linear-gradient(180deg, var(--leather) 0%, #4a3222 50%, var(--leather) 100%);
+            position: relative;
+        }
+
+        .wanted-poster {
+            background: linear-gradient(135deg, #F5E6C8 0%, #E8D5A8 30%, #F0DEB8 60%, #D4C49A 100%);
+            border: 8px solid var(--saddle);
+            box-shadow:
+                inset 0 0 60px rgba(139,69,19,0.25),
+                inset 0 0 120px rgba(139,69,19,0.1),
+                0 15px 50px rgba(0,0,0,0.6),
+                0 5px 15px rgba(0,0,0,0.4);
+            max-width: 550px;
+            width: 100%;
+            padding: 45px 35px;
+            text-align: center;
+            position: relative;
+            transform: rotate(-1deg);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            /* Outer rope-style double border */
+            outline: 3px solid var(--parchment-dark);
+            outline-offset: 4px;
+            opacity: 0;
+            transform: rotate(-1deg) scale(0.85);
+        }
+
+        .wanted-poster.animate-in {
+            opacity: 1;
+            transform: rotate(-0.5deg) scale(1);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .wanted-poster:hover {
+            transform: rotate(0deg) scale(1.02);
+            box-shadow:
+                inset 0 0 60px rgba(139,69,19,0.25),
+                0 20px 60px rgba(0,0,0,0.7),
+                0 0 30px rgba(197,150,26,0.2);
+        }
+
+        /* Nail at top */
+        .wanted-poster::before {
+            content: '';
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle, #888 30%, #555 70%);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 3;
+        }
+
+        /* Bullet holes */
+        .bullet-hole {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #1a1a1a 30%, #3E2723 60%, transparent 70%);
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.3);
+        }
+        .bullet-hole:nth-child(1) { top: 25px; right: 35px; }
+        .bullet-hole:nth-child(2) { bottom: 40px; left: 25px; width: 10px; height: 10px; }
+        .bullet-hole:nth-child(3) { top: 50%; right: 20px; width: 8px; height: 8px; }
+
+        .poster-top-text {
+            font-family: 'Rye', cursive;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            color: var(--sienna);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .poster-wanted {
+            font-family: 'Rye', cursive;
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            color: var(--brown-dark);
+            letter-spacing: 0.08em;
+            text-shadow: 2px 2px 0 rgba(139,69,19,0.2);
+            line-height: 1.1;
+        }
+
+        .poster-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        .poster-divider .line {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--saddle), transparent);
+        }
+        .poster-divider .star-icon {
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        .poster-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            color: var(--sienna);
+            margin-bottom: 25px;
+        }
+
+        .poster-names {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: clamp(1.8rem, 7vw, 3rem);
+            color: var(--brown-dark);
+            text-shadow: 1px 1px 0 rgba(197,150,26,0.3);
+            margin: 20px 0;
+            line-height: 1.3;
+            transition: text-shadow 0.3s ease;
+        }
+        .poster-names:hover {
+            text-shadow: 0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.3);
+        }
+        .poster-names .ampersand {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 0.6em;
+            color: var(--gold);
+            display: block;
+            margin: 5px 0;
+        }
+
+        .poster-date {
+            font-family: 'Rye', cursive;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            color: var(--saddle);
+            letter-spacing: 0.1em;
+            margin: 20px 0;
+        }
+
+        .poster-divider-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0 15px;
+            gap: 10px;
+        }
+        .poster-divider-bottom .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--saddle), transparent);
+        }
+
+        .poster-reward {
+            font-family: 'Rye', cursive;
+            font-size: clamp(0.7rem, 2vw, 0.85rem);
+            color: var(--sienna);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .poster-reward-text {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(0.85rem, 2.5vw, 1rem);
+            color: var(--brown-dark);
+        }
+
+        /* Corner decorations */
+        .corner-deco {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.5;
+        }
+        .corner-deco.tl { top: 15px; left: 15px; }
+        .corner-deco.tr { top: 15px; right: 15px; }
+        .corner-deco.bl { bottom: 15px; left: 15px; }
+        .corner-deco.br { bottom: 15px; right: 15px; }
+
+        /* ===== COUNTDOWN SECTION ===== */
+        .countdown-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    #5a3a1a 0px, #5a3a1a 2px,
+                    #6b4423 2px, #6b4423 20px,
+                    #5a3a1a 20px, #5a3a1a 22px,
+                    #7a5233 22px, #7a5233 40px
+                ),
+                linear-gradient(180deg, var(--leather), #3a2515);
+            position: relative;
+        }
+
+        .countdown-title {
+            font-family: 'Rye', cursive;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .countdown-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .countdown-box {
+            background: linear-gradient(180deg, #4a3020 0%, #3a2515 50%, #2C1810 100%);
+            border: 3px solid var(--saddle);
+            border-radius: 8px;
+            padding: 20px 15px;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .countdown-box.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .countdown-box:nth-child(2).animate-in { transition-delay: 0.15s; }
+        .countdown-box:nth-child(3).animate-in { transition-delay: 0.3s; }
+        .countdown-box:nth-child(4).animate-in { transition-delay: 0.45s; }
+
+        .countdown-number {
+            font-family: 'Rye', cursive;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(197,150,26,0.4);
+            line-height: 1;
+            display: inline-block;
+        }
+
+        .countdown-number.flip {
+            animation: flipDigit 0.6s ease-in-out;
+        }
+
+        @keyframes flipDigit {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); opacity: 0.5; }
+            100% { transform: rotateX(0); opacity: 1; }
+        }
+
+        .countdown-label {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.85rem;
+            color: var(--cream);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: 10px;
+        }
+
+        .countdown-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: var(--cream);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* Side cactus decorations */
+        .cactus-deco {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .cactus-deco.left { left: 30px; }
+        .cactus-deco.right { right: 30px; }
+
+        /* ===== FOOTER SECTION ===== */
+        .footer-section {
+            padding: 60px 20px 80px;
+            background: linear-gradient(180deg, var(--leather) 0%, #4a3222 20%, var(--parchment) 40%, var(--parchment) 100%);
+            text-align: center;
+            position: relative;
+        }
+
+        .rope-divider {
+            width: 80%;
+            max-width: 400px;
+            height: 4px;
+            margin: 0 auto 40px;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--saddle) 0px, var(--saddle) 5px,
+                var(--parchment-dark) 5px, var(--parchment-dark) 10px
+            );
+            border-radius: 2px;
+        }
+
+        .footer-text {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: var(--brown-dark);
+            margin-bottom: 15px;
+        }
+
+        .footer-subtext {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: var(--sienna);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .footer-decorations {
+            margin-top: 40px;
+            font-size: 1.5rem;
+            letter-spacing: 15px;
+            opacity: 0.6;
+        }
+
+        /* ===== TUMBLEWEED ===== */
+        .tumbleweed {
+            position: fixed;
+            bottom: 50px;
+            right: -80px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid var(--saddle);
+            opacity: 0.25;
+            animation: rollTumbleweed 18s linear infinite;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(circle, transparent 40%, rgba(139,69,19,0.3) 100%);
+        }
+        .tumbleweed::before {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border-radius: 50%;
+            border: 2px dashed rgba(139,69,19,0.4);
+        }
+
+        @keyframes rollTumbleweed {
+            0% { right: -80px; transform: rotate(0deg); bottom: 50px; }
+            25% { bottom: 70px; }
+            50% { bottom: 40px; }
+            75% { bottom: 65px; }
+            100% { right: 110%; transform: rotate(720deg); bottom: 50px; }
+        }
+
+        /* ===== DUST PARTICLES ===== */
+        .dust-particle {
+            position: fixed;
+            width: var(--size, 3px);
+            height: var(--size, 3px);
+            background: radial-gradient(circle, rgba(218,165,32,0.6), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 4;
+            animation: floatDust var(--dur, 12s) ease-in-out infinite var(--delay, 0s);
+            left: var(--x, 50%);
+            top: var(--y, 50%);
+        }
+
+        @keyframes floatDust {
+            0%, 100% { opacity: 0; transform: translate(0, 0); }
+            20% { opacity: 0.7; }
+            50% { opacity: 0.4; transform: translate(var(--dx, 30px), var(--dy, -80px)); }
+            80% { opacity: 0.6; }
+        }
+
+        /* ===== HORSESHOE SWING ===== */
+        .horseshoe-swing {
+            position: absolute;
+            top: -5px;
+            right: 80px;
+            font-size: 2rem;
+            transform-origin: top center;
+            animation: swing 3s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-12deg); }
+            50% { transform: rotate(12deg); }
+        }
+
+        /* ===== CLICK PARTICLE EFFECT ===== */
+        .click-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            font-size: 1.2rem;
+            animation: particleFloat 1.2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: translate(var(--px, 20px), -80px) scale(0.3) rotate(var(--pr, 180deg)); }
+        }
+
+        /* ===== MUSIC BUTTON ===== */
+        .music-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 50;
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--gold);
+            background: var(--leather);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .music-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 20px rgba(197,150,26,0.4);
+        }
+        .music-btn.playing {
+            animation: spinSlow 4s linear infinite;
+        }
+
+        .music-tooltip {
+            position: fixed;
+            bottom: 82px;
+            right: 15px;
+            background: var(--leather);
+            color: var(--gold);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: 'Playfair Display', serif;
+            border: 1px solid var(--saddle);
+            animation: pulse 2s ease-in-out infinite;
+            z-index: 50;
+            white-space: nowrap;
+        }
+        .music-tooltip.hidden { display: none; }
+
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .wanted-poster { padding: 30px 20px; margin: 0 10px; }
+            .countdown-box { min-width: 70px; padding: 15px 10px; }
+            .cactus-deco { display: none; }
+            .horseshoe-swing { display: none; }
+            .tumbleweed { width: 35px; height: 35px; }
+        }
+
+        @media (min-width: 768px) {
+            .countdown-box { min-width: 130px; padding: 25px 20px; }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="hero">
+        <div class="stars" id="stars"></div>
+        <div class="cactus-silhouette left"></div>
+        <div class="cactus-silhouette right"></div>
+        <div class="desert-silhouette"></div>
+        <div class="hero-text">
+            <h1>SAVE THE DATE</h1>
+            <p class="hero-subtitle">Una aventura en el Viejo Oeste</p>
+        </div>
+        <div class="scroll-indicator">
+            <span>Descubre</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
+
+    <!-- ===== WANTED POSTER SECTION ===== -->
+    <section class="poster-section">
+        <div class="horseshoe-swing">🔩</div>
+        <div class="wanted-poster" id="poster">
+            <div class="bullet-hole"></div>
+            <div class="bullet-hole"></div>
+            <div class="bullet-hole"></div>
+
+            <span class="corner-deco tl">⭐</span>
+            <span class="corner-deco tr">🧲</span>
+            <span class="corner-deco bl">🧲</span>
+            <span class="corner-deco br">⭐</span>
+
+            <p class="poster-top-text">Se buscan</p>
+            <h2 class="poster-wanted">WANTED</h2>
+
+            <div class="poster-divider">
+                <span class="line"></span>
+                <span class="star-icon">★</span>
+                <span class="line"></span>
+            </div>
+
+            <p class="poster-subtitle">Dos corazones unidos por el destino</p>
+
+            <div class="poster-names">
+                Laura
+                <span class="ampersand">y</span>
+                Roberto
+            </div>
+
+            <p class="poster-date">29 de Septiembre, 2028</p>
+
+            <div class="poster-divider-bottom">
+                <span class="line"></span>
+                <span class="star-icon" style="font-size:0.8rem;">★ ★ ★</span>
+                <span class="line"></span>
+            </div>
+
+            <p class="poster-reward">Recompensa</p>
+            <p class="poster-reward-text">Tu presencia es el mejor regalo</p>
+        </div>
+    </section>
+
+    <!-- ===== COUNTDOWN SECTION ===== -->
+    <section class="countdown-section">
+        <span class="cactus-deco left">🌵</span>
+        <span class="cactus-deco right">🌵</span>
+
+        <h2 class="countdown-title">Faltan...</h2>
+
+        <div class="countdown-container" id="countdown">
+            <div class="countdown-box" id="cb-days">
+                <span class="countdown-number" id="days">000</span>
+                <div class="countdown-label">Días</div>
+            </div>
+            <div class="countdown-box" id="cb-hours">
+                <span class="countdown-number" id="hours">00</span>
+                <div class="countdown-label">Horas</div>
+            </div>
+            <div class="countdown-box" id="cb-minutes">
+                <span class="countdown-number" id="minutes">00</span>
+                <div class="countdown-label">Minutos</div>
+            </div>
+            <div class="countdown-box" id="cb-seconds">
+                <span class="countdown-number" id="seconds">00</span>
+                <div class="countdown-label">Segundos</div>
+            </div>
+        </div>
+
+        <p class="countdown-subtitle">...para el día más esperado</p>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <section class="footer-section">
+        <div class="rope-divider"></div>
+        <h3 class="footer-text">¡Los esperamos!</h3>
+        <p class="footer-subtext">
+            Preparen sus sombreros y plumas,<br>
+            porque esta celebración será<br>
+            la mayor aventura del Viejo Oeste.
+        </p>
+        <div class="footer-decorations">
+            🏜️ 🤠 🪶 🐎 🌵
+        </div>
+    </section>
+
+    <!-- ===== TUMBLEWEED ===== -->
+    <div class="tumbleweed"></div>
+
+    <!-- ===== DUST PARTICLES ===== -->
+    <div id="dust-container"></div>
+
+    <!-- ===== MUSIC BUTTON ===== -->
+    <div class="music-tooltip" id="musicTooltip">🎵 Toca para escuchar</div>
+    <button class="music-btn" id="musicBtn" aria-label="Reproducir música">🎵</button>
+
+    <script>
+        // ===== GENERATE STARS =====
+        (function() {
+            const starsEl = document.getElementById('stars');
+            const count = window.innerWidth < 480 ? 40 : 80;
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * 100;
+                const y = Math.random() * 70;
+                const size = 1 + Math.random() * 3;
+                const dur = 2 + Math.random() * 4;
+                const delay = Math.random() * 5;
+                html += `<div class="star" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;--dur:${dur}s;--delay:${delay}s"></div>`;
+            }
+            starsEl.innerHTML = html;
+        })();
+
+        // ===== GENERATE DUST PARTICLES =====
+        (function() {
+            const container = document.getElementById('dust-container');
+            const count = window.innerWidth < 480 ? 6 : 15;
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * 100;
+                const y = 20 + Math.random() * 60;
+                const size = 2 + Math.random() * 4;
+                const dur = 8 + Math.random() * 12;
+                const delay = Math.random() * 10;
+                const dx = -30 + Math.random() * 60;
+                const dy = -60 - Math.random() * 40;
+                html += `<div class="dust-particle" style="--x:${x}%;--y:${y}%;--size:${size}px;--dur:${dur}s;--delay:${delay}s;--dx:${dx}px;--dy:${dy}px"></div>`;
+            }
+            container.innerHTML = html;
+        })();
+
+        // ===== COUNTDOWN TIMER =====
+        const weddingDate = new Date('2028-09-29T17:00:00');
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+
+        let prevValues = { days: '', hours: '', minutes: '', seconds: '' };
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = weddingDate - now;
+
+            if (diff <= 0) {
+                daysEl.textContent = '0';
+                hoursEl.textContent = '0';
+                minutesEl.textContent = '0';
+                secondsEl.textContent = '0';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            const vals = {
+                days: String(days),
+                hours: String(hours).padStart(2, '0'),
+                minutes: String(minutes).padStart(2, '0'),
+                seconds: String(seconds).padStart(2, '0')
+            };
+
+            [['days', daysEl], ['hours', hoursEl], ['minutes', minutesEl], ['seconds', secondsEl]].forEach(([key, el]) => {
+                if (prevValues[key] !== vals[key]) {
+                    el.textContent = vals[key];
+                    el.classList.remove('flip');
+                    void el.offsetWidth; // reflow
+                    el.classList.add('flip');
+                }
+            });
+
+            prevValues = vals;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // ===== SCROLL ANIMATIONS (IntersectionObserver) =====
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, { threshold: 0.2 });
+
+        document.querySelectorAll('.wanted-poster, .countdown-box').forEach(el => observer.observe(el));
+
+        // ===== PARALLAX (desktop only) =====
+        if (window.innerWidth >= 768) {
+            window.addEventListener('scroll', () => {
+                const scrollY = window.scrollY;
+                const desert = document.querySelector('.desert-silhouette');
+                if (desert) {
+                    desert.style.transform = `translateY(${scrollY * 0.15}px)`;
+                }
+            }, { passive: true });
+        }
+
+        // ===== CLICK PARTICLE EFFECTS =====
+        const particleEmojis = ['⭐', '🧲', '★', '🌟', '💛'];
+        document.addEventListener('click', (e) => {
+            // Don't spawn on button clicks
+            if (e.target.closest('.music-btn')) return;
+
+            for (let i = 0; i < 3; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'click-particle';
+                particle.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+                particle.style.left = e.clientX + 'px';
+                particle.style.top = e.clientY + 'px';
+                particle.style.setProperty('--px', (-30 + Math.random() * 60) + 'px');
+                particle.style.setProperty('--pr', (Math.random() * 360) + 'deg');
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 1200);
+            }
+        });
+
+        // ===== MUSIC PLAYER =====
+        // Using Web Audio API to generate a simple western-style tone sequence
+        const musicBtn = document.getElementById('musicBtn');
+        const musicTooltip = document.getElementById('musicTooltip');
+        let audioCtx = null;
+        let isPlaying = false;
+        let musicInterval = null;
+
+        // Simple western melody using Web Audio API (no external file needed)
+        function playWesternNote(ctx, freq, startTime, duration, gain) {
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, startTime);
+            gainNode.gain.setValueAtTime(gain, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playMelody() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioCtx.currentTime;
+            // Simple western-style melody (pentatonic scale)
+            const notes = [
+                [329.63, 0, 0.5],    // E4
+                [392.00, 0.5, 0.3],  // G4
+                [440.00, 0.8, 0.4],  // A4
+                [392.00, 1.2, 0.3],  // G4
+                [329.63, 1.5, 0.6],  // E4
+                [293.66, 2.1, 0.4],  // D4
+                [261.63, 2.5, 0.8],  // C4
+                [293.66, 3.5, 0.3],  // D4
+                [329.63, 3.8, 0.5],  // E4
+                [392.00, 4.3, 0.3],  // G4
+                [440.00, 4.6, 0.6],  // A4
+                [523.25, 5.2, 0.4],  // C5
+                [440.00, 5.6, 0.8],  // A4
+            ];
+            notes.forEach(([freq, offset, dur]) => {
+                playWesternNote(audioCtx, freq, now + offset, dur, 0.08);
+            });
+        }
+
+        musicBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                isPlaying = false;
+                clearInterval(musicInterval);
+                musicBtn.classList.remove('playing');
+                musicBtn.textContent = '🎵';
+            } else {
+                isPlaying = true;
+                musicBtn.classList.add('playing');
+                musicBtn.textContent = '⏸️';
+                musicTooltip.classList.add('hidden');
+                playMelody();
+                musicInterval = setInterval(() => {
+                    if (isPlaying) playMelody();
+                }, 7000);
+            }
+        });
+
+        // Hide tooltip after 5 seconds
+        setTimeout(() => musicTooltip.classList.add('hidden'), 5000);
+    </script>
+</body>
+</html>
