@@ -1,0 +1,636 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ===================== MULTI-TENANT =====================
+
+model Company {
+  id            String   @id @default(uuid())
+  name          String
+  cif           String   @unique
+  address       String?
+  city          String?
+  postalCode    String?
+  province      String?
+  country       String   @default("España")
+  phone         String?
+  email         String?
+  web           String?
+  logo          String?
+  fiscalName    String?
+  fiscalAddress String?
+  currency      String   @default("EUR")
+  prefixProject String   @default("CRAZY")
+  prefixBudget  String   @default("PPTO")
+  prefixInvoice String   @default("FE")
+  prefixReceivedInvoice String @default("FR")
+  prefixOrder   String   @default("OC")
+  nextProjectNum Int     @default(1)
+  nextBudgetNum  Int     @default(1)
+  nextInvoiceNum Int     @default(1)
+  nextReceivedInvoiceNum Int @default(1)
+  nextOrderNum   Int     @default(1)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  userCompanies UserCompany[]
+  settings      CompanySetting[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  clients       Client[]
+  suppliers     Supplier[]
+  projects      Project[]
+  personnel     Person[]
+  contracts     Contract[]
+}
+
+// ===================== USERS & AUTH =====================
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  photo           String?
+  theme           String   @default("light")
+  language        String   @default("es")
+  mustChangePassword Boolean @default(true)
+  failedAttempts  Int      @default(0)
+  lockedUntil     DateTime?
+  lastLoginAt     DateTime?
+  telegramChatId  String?
+  active          Boolean  @default(true)
+  isSuperAdmin    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  companies       UserCompany[]
+  sessions        Session[]
+  loginLogs       LoginLog[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  tablePreferences TablePreference[]
+  dashboardWidgets DashboardWidget[]
+}
+
+model UserCompany {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  role      String   @default("user")
+  active    Boolean  @default(true)
+  lastAccessAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  permissions Permission[]
+
+  @@unique([userId, companyId])
+}
+
+model Permission {
+  id            String @id @default(uuid())
+  userCompanyId String
+  module        String
+  canView       Boolean @default(false)
+  canCreate     Boolean @default(false)
+  canEdit       Boolean @default(false)
+  canDelete     Boolean @default(false)
+  canExport     Boolean @default(false)
+
+  userCompany UserCompany @relation(fields: [userCompanyId], references: [id], onDelete: Cascade)
+
+  @@unique([userCompanyId, module])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  device       String?
+  expiresAt    DateTime
+  refreshExpiresAt DateTime
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String
+  ipAddress String?
+  userAgent String?
+  device    String?
+  success   Boolean
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// ===================== CONFIGURATION =====================
+
+model CompanySetting {
+  id        String @id @default(uuid())
+  companyId String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, key])
+}
+
+// ===================== NOTIFICATIONS =====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String?
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// ===================== AUDIT =====================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  companyId  String?
+  action     String
+  entity     String
+  entityId   String?
+  oldData    String?
+  newData    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+}
+
+// ===================== USER PREFERENCES =====================
+
+model TablePreference {
+  id        String @id @default(uuid())
+  userId    String
+  tableId   String
+  columns   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tableId])
+}
+
+model DashboardWidget {
+  id        String @id @default(uuid())
+  userId    String
+  widgetKey String
+  position  Int    @default(0)
+  visible   Boolean @default(true)
+  config    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, widgetKey])
+}
+
+// ===================== CLIENTS =====================
+
+model Client {
+  id              String   @id @default(uuid())
+  companyId       String
+  name            String
+  cif             String
+  address         String?
+  postalCode      String?
+  city            String?
+  province        String?
+  country         String   @default("España")
+  phone           String?
+  email           String?
+  contactPerson   String?
+  contactRole     String?
+  web             String?
+  paymentTerms    String   @default("30")
+  iban            String?
+  notes           String?
+  tags            String?  // JSON array
+  status          String   @default("active") // active, inactive
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  projects Project[]
+
+  @@unique([companyId, cif])
+}
+
+// ===================== SUPPLIERS =====================
+
+model Supplier {
+  id              String   @id @default(uuid())
+  companyId       String
+  name            String
+  cif             String
+  address         String?
+  postalCode      String?
+  city            String?
+  province        String?
+  country         String   @default("España")
+  phone           String?
+  email           String?
+  contactPerson   String?
+  web             String?
+  category        String?  // material, transporte, alquiler, etc.
+  paymentTerms    String   @default("30")
+  iban            String?
+  irpfRetention   Float    @default(0) // % IRPF if autónomo
+  notes           String?
+  rating          Int?     // 1-5 stars
+  ratingComment   String?
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  projectMaterials ProjectMaterial[]
+
+  @@unique([companyId, cif])
+}
+
+// ===================== PROJECTS =====================
+
+model Project {
+  id              String   @id @default(uuid())
+  companyId       String
+  clientId        String?
+  code            String
+  name            String
+  description     String?
+  status          String   @default("borrador") // borrador, en_curso, en_pausa, completado, cancelado
+  priority        String   @default("media")    // baja, media, alta, urgente
+  location        String?
+  designStart     DateTime?
+  designEnd       DateTime?
+  buildStart      DateTime?
+  buildEnd        DateTime?
+  mountStart      DateTime?
+  mountEnd        DateTime?
+  dismountStart   DateTime?
+  dismountEnd     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client     Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  phases          ProjectPhase[]
+  tasks           ProjectTask[]
+  materials       ProjectMaterial[]
+  documents       ProjectDocument[]
+  photos          ProjectPhoto[]
+  notes           ProjectNote[]
+  timeEntries     TimeEntry[]
+  comments        ProjectComment[]
+  assignments     ProjectAssignment[]
+
+  @@unique([companyId, code])
+}
+
+model ProjectPhase {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  type        String?  // diseño, decorado, construcción, envío, montaje, desmontaje
+  order       Int      @default(0)
+  status      String   @default("pendiente") // pendiente, en_curso, completada
+  progress    Int      @default(0) // 0-100
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       ProjectTask[]
+  timeEntries TimeEntry[]
+  photos      ProjectPhoto[]
+}
+
+model ProjectTask {
+  id          String   @id @default(uuid())
+  projectId   String
+  phaseId     String?
+  assigneeId  String?
+  title       String
+  description String?
+  status      String   @default("pendiente") // pendiente, en_curso, completada, bloqueada
+  priority    String   @default("media")
+  dueDate     DateTime?
+  checklist   String?  // JSON array of {text, done}
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase    ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  assignee Person?       @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+}
+
+model ProjectMaterial {
+  id          String   @id @default(uuid())
+  projectId   String
+  supplierId  String?
+  name        String
+  quantity    Float    @default(1)
+  unit        String   @default("ud")
+  unitCost    Float    @default(0)
+  totalCost   Float    @default(0)
+  status      String   @default("pendiente") // pendiente, pedido, recibido
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+}
+
+model ProjectDocument {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  filePath    String
+  fileSize    Int?
+  mimeType    String?
+  category    String   @default("otro") // plano, contrato, presupuesto, otro
+  version     Int      @default(1)
+  notes       String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectPhoto {
+  id          String   @id @default(uuid())
+  projectId   String
+  phaseId     String?
+  filePath    String
+  thumbnail   String?
+  description String?
+  tags        String?  // JSON array
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+}
+
+model ProjectNote {
+  id        String   @id @default(uuid())
+  projectId String
+  authorId  String?
+  type      String   @default("general") // incidencia, decisión, cambio, general
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectComment {
+  id        String   @id @default(uuid())
+  projectId String
+  authorId  String?
+  content   String
+  filePath  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model TimeEntry {
+  id        String   @id @default(uuid())
+  projectId String
+  phaseId   String?
+  personId  String
+  date      DateTime
+  hours     Float    @default(0)
+  days      Float    @default(0)
+  cost      Float    @default(0)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  person  Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model ProjectAssignment {
+  id        String   @id @default(uuid())
+  projectId String
+  personId  String
+  role      String?
+  dailyRate Float?
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, personId])
+}
+
+// ===================== PERSONNEL =====================
+
+model Person {
+  id              String   @id @default(uuid())
+  companyId       String
+  firstName       String
+  lastName        String
+  dni             String   @unique
+  email           String?
+  phone           String?
+  photo           String?
+  role            String?  // rol principal
+  skills          String?  // JSON array of tags
+  position        String?
+  category        String?  // categoría profesional
+  dailyRate       Float?
+  weeklySalary    Float?
+  address         String?
+  postalCode      String?
+  city            String?
+  province        String?
+  country         String   @default("España")
+  ssNumber        String?  // Nº Seguridad Social
+  irpf            Float?   // % IRPF
+  iban            String?
+  birthDate       DateTime?
+  nationality     String?
+  workPermit      Boolean  @default(true)
+  workPermitExpiry DateTime?
+  status          String   @default("active") // active, inactive
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  company      Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contracts    Contract[]
+  tasks        ProjectTask[]
+  timeEntries  TimeEntry[]
+  assignments  ProjectAssignment[]
+  diets        Diet[]
+  accommodations Accommodation[]
+  prlDocs      PRLDocument[]
+  availability PersonAvailability[]
+  personDocs   PersonDocument[]
+}
+
+model Diet {
+  id        String   @id @default(uuid())
+  personId  String
+  projectId String?
+  date      DateTime
+  type      String   // completa, media, desplazamiento
+  amount    Float
+  location  String?
+  status    String   @default("pendiente") // pendiente, aprobada, pagada
+  receipt   String?  // file path
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model Accommodation {
+  id          String   @id @default(uuid())
+  personId    String
+  projectId   String?
+  type        String   // hotel, apartamento, otro
+  name        String
+  address     String?
+  checkIn     DateTime
+  checkOut    DateTime
+  nightCost   Float    @default(0)
+  totalCost   Float    @default(0)
+  status      String   @default("pendiente") // pendiente, confirmado, cancelado
+  confirmation String? // file path
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model PRLDocument {
+  id          String   @id @default(uuid())
+  personId    String
+  type        String   // reconocimiento_medico, formacion_prl, epi
+  description String?
+  date        DateTime
+  expiryDate  DateTime?
+  result      String?
+  filePath    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model PersonAvailability {
+  id        String   @id @default(uuid())
+  personId  String
+  startDate DateTime
+  endDate   DateTime
+  type      String   // disponible, vacaciones, baja, otro_proyecto
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model PersonDocument {
+  id          String   @id @default(uuid())
+  personId    String
+  type        String   // dni, contrato, seguridad_social, otro
+  name        String
+  filePath    String
+  extractedData String? // JSON from PDF extraction
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+// ===================== CONTRACTS =====================
+
+model Contract {
+  id          String   @id @default(uuid())
+  companyId   String
+  personId    String
+  type        String   // temporal, por_obra, indefinido, autonomo, becario
+  startDate   DateTime
+  endDate     DateTime?
+  workday     String   @default("completa") // completa, parcial
+  hours       Float?   // hours if parcial
+  salary      Float?
+  convention  String?
+  workCenter  String?
+  category    String?
+  status      String   @default("borrador") // borrador, vigente, finalizado, renovado
+  signedDoc   String?  // file path
+  signature   String?  // base64 signature
+  signedAt    DateTime?
+  signedIp    String?
+  projectId   String?  // for por_obra contracts
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
